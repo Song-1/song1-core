@@ -1,14 +1,19 @@
 package core.business.dao.hibernate.impl;
 
+import java.io.Serializable;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.hibernate.Query;
+import org.hibernate.SQLQuery;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+
 import core.business.dao.BaseDAOImpl;
 import core.business.dao.hibernate.BaseHibernate4DAO;
 import core.business.pojo.Parameter;
 import core.util.Pagination;
-import java.io.Serializable;
-import java.util.List;
-import org.hibernate.Query;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 
 public class BaseHibernate4DAOImpl<T> extends BaseDAOImpl<T> implements BaseHibernate4DAO<T> {
 	private SessionFactory sessionFactory;
@@ -75,6 +80,45 @@ public class BaseHibernate4DAOImpl<T> extends BaseDAOImpl<T> implements BaseHibe
 		}
 		return 0;
 	}
+	
+	public int getCount(String sql,Map<Object, Object> params) {
+		try {
+			Session session = this.sessionFactory.getCurrentSession();
+			SQLQuery createSQLQuery = session.createSQLQuery(sql);
+			Iterator<Object> iterator = params.keySet().iterator();
+			while (iterator.hasNext()) {
+				Object next = iterator.next();
+				Object key = params.get(next);
+				Object value = params.get(key);
+				if (key != null && key instanceof Integer && value instanceof Integer) {
+					createSQLQuery.setString((Integer)key, (String)value);
+				}
+			}
+			@SuppressWarnings("unchecked")
+			List<Object> list = createSQLQuery.list();
+			return list.size();
+		} catch (Exception e) {
+			setException(e);
+		}
+		return 0;
+	}
+	
+	public int getCountBysql(String sql, Object[] params) {
+		try {
+			SQLQuery query = sessionFactory.getCurrentSession().createSQLQuery(sql);
+			for (int i = 0; i < params.length; i++) {
+				if (params[i] instanceof Integer) {
+					query.setInteger(i, (Integer)params[i]);
+				}else if (params[i] instanceof String) {
+					query.setString(i, (String)params[i]);
+				}
+			}
+			return query.list().size();
+		} catch (Exception e) {
+			setException(e);
+		}
+		return 0;
+	}
 
 	public List<T> findAll(String orderby, Boolean isDesc) {
 		try {
@@ -106,7 +150,44 @@ public class BaseHibernate4DAOImpl<T> extends BaseDAOImpl<T> implements BaseHibe
 		}
 		return q;
 	}
-
+	/**
+	 * 
+	 * @Title: findList 条件查询
+	 * @param hql
+	 *            hql语句
+	 * @param params
+	 *            条件数组
+	 * @return List<T>
+	 * @throws
+	 */
+	public List<T> findListBysql(String sql, Object[] params) {
+		SQLQuery query = sessionFactory.getCurrentSession().createSQLQuery(sql);
+		for (int i = 0; i < params.length; i++) {
+			if (params[i] instanceof Integer) {
+				query.setInteger(i, (Integer)params[i]);
+			}else if (params[i] instanceof String) {
+				query.setString(i, (String)params[i]);
+			}
+		}
+		return query.list();
+	}
+	
+	public List<T> findListBysql(String sql, Map params) {
+			Session session = this.sessionFactory.getCurrentSession();
+			SQLQuery createSQLQuery = session.createSQLQuery(sql);
+			Iterator<Object> iterator = params.keySet().iterator();
+			while (iterator.hasNext()) {
+				Object next = iterator.next();
+				Object key = params.get(next);
+				Object value = params.get(key);
+				if (key != null && key instanceof Integer && value instanceof Integer) {
+					createSQLQuery.setString((Integer)key, (String)value);
+				}
+			}
+			@SuppressWarnings("unchecked")
+			List<T> list = createSQLQuery.list();
+			return list;
+	}
 	/**
 	 * 
 	 * @Title: findList 条件查询
@@ -183,7 +264,7 @@ public class BaseHibernate4DAOImpl<T> extends BaseDAOImpl<T> implements BaseHibe
 			if ((parameters != null) && (parameters.size() > 0)) {
 				hql.append(" where ");
 				for (int i = 0; i < parameters.size(); ++i) {
-					Parameter parameter = (Parameter) parameters.get(i);
+					Parameter parameter = parameters.get(i);
 					if (i > 0) {
 						hql.append(" and ");
 					}
