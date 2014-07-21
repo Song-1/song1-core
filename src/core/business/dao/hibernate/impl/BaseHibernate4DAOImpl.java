@@ -1,6 +1,7 @@
 package core.business.dao.hibernate.impl;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -214,6 +215,11 @@ public class BaseHibernate4DAOImpl<T> extends BaseDAOImpl<T> implements BaseHibe
 	}
 
 	public Pagination<T> findList(Integer offset, Integer pageSize, String hql, Object[] params) {
+		int count =  getCount(hql, params);
+		if(offset != null && offset.intValue() > count){
+			///// 如果起始条数大于总条数,则默认从零开始(即显示第一页)
+			offset = 0;
+		}
 		Query q = queryBySession(hql, params);
 		q.setFirstResult(offset.intValue());
 		q.setMaxResults(pageSize.intValue());
@@ -227,13 +233,14 @@ public class BaseHibernate4DAOImpl<T> extends BaseDAOImpl<T> implements BaseHibe
 			Session session = this.sessionFactory.getCurrentSession();
 			StringBuffer hql = new StringBuffer();
 			hql.append(" from " + getTableName());
+			Map<String,Object> map = new HashMap<String, Object>(1);
 			if (parameter != null) {
 				if ((parameter.getValue() != null) && (parameter.getName() != null)) {
+					String paramName = parameter.getName();
 					hql.append(" where ");
-					hql.append(parameter.getName());
-					hql.append("= '");
-					hql.append(parameter.getValue());
-					hql.append("'");
+					hql.append(paramName);
+					hql.append("= :"+paramName + " ");
+					map.put(paramName, parameter.getValue());
 				}else if (parameter.getName() != null){
 					hql.append(" where ");
 					hql.append(parameter.getName());
@@ -248,7 +255,11 @@ public class BaseHibernate4DAOImpl<T> extends BaseDAOImpl<T> implements BaseHibe
 					hql.append(" asc ");
 				}
 			}
-			List list = session.createQuery(hql.toString()).list();
+			Query q = session.createQuery(hql.toString());
+			for(Map.Entry<String, Object> entry : map.entrySet()){
+				q.setParameter(entry.getKey(), entry.getValue());
+			}
+			List list = q.list();
 			return list;
 		} catch (Exception e) {
 			setException(e);
@@ -261,6 +272,7 @@ public class BaseHibernate4DAOImpl<T> extends BaseDAOImpl<T> implements BaseHibe
 			Session session = this.sessionFactory.getCurrentSession();
 			StringBuffer hql = new StringBuffer();
 			hql.append(" from " + getTableName());
+			Map<String,Object> map = new HashMap<String, Object>();
 			if ((parameters != null) && (parameters.size() > 0)) {
 				hql.append(" where ");
 				for (int i = 0; i < parameters.size(); ++i) {
@@ -269,10 +281,10 @@ public class BaseHibernate4DAOImpl<T> extends BaseDAOImpl<T> implements BaseHibe
 						hql.append(" and ");
 					}
 					if (parameter.getValue() != null) {
-						hql.append(parameter.getName());
-						hql.append("= '");
-						hql.append(parameter.getValue());
-						hql.append("'");
+						String paramName = parameter.getName();
+						hql.append(paramName);
+						hql.append(" = :"+paramName + " ");
+						map.put(paramName, parameter.getValue());
 					} else {
 						hql.append(parameter.getName());
 						hql.append(" is null ");
@@ -287,8 +299,11 @@ public class BaseHibernate4DAOImpl<T> extends BaseDAOImpl<T> implements BaseHibe
 					hql.append(" asc ");
 				}
 			}
-
-			List list = session.createQuery(hql.toString()).list();
+			Query q = session.createQuery(hql.toString());
+			for(Map.Entry<String, Object> entry : map.entrySet()){
+				q.setParameter(entry.getKey(), entry.getValue());
+			}
+			List list = q.list();
 			return list;
 		} catch (Exception e) {
 			setException(e);

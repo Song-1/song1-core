@@ -13,6 +13,10 @@ public class Parameter {
 		this.name = name;
 		this.value = new Long(value);
 	}
+	public Parameter(String name, int value) {
+		this.name = name;
+		this.value = new Integer(value);
+	}
 
 	public String getName() {
 		return this.name;
