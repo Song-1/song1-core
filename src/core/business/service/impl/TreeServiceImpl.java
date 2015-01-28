@@ -34,7 +34,7 @@ public class TreeServiceImpl<T extends TreeHandBean> implements TreeService<T> {
 		int i = 0;
 		while (true) {
 			if ((pCodeValue == null) || (pCodeValue.length() == 0)) {
-				list = getDAO().findList("from " + getDAO().getTableName() + " where " + pCodeKey + " is null", null);
+				list = getDAO().findList("from " + getDAO().getTableName() + " where " + pCodeKey + " is null or " + pCodeKey + "='' ", null);
 				logger.debug("from " + getDAO().getTableName() + " where " + pCodeKey + " is null");
 			} else {
 				list = getDAO().findList("from " + getDAO().getTableName() + " where " + pCodeKey + " = ? ",

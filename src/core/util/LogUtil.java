@@ -1,18 +1,22 @@
 package core.util;
 
-import java.util.List;
+import org.apache.log4j.Logger;
 
 public class LogUtil {
 
-	public static void sysout(String message) {
-		System.out.println("message:" + message);
-	}
-	
-	public static void printList(List list){
-		String message=null;
-		for (Object object : list) {
-			
+	public static final Logger log = Logger.getLogger(LogUtil.class);
+	public static final String enter_next_line = "\r\n";
+	/**
+	 * 记录错误
+	 * @param e
+	 */
+	public static void printDebugException(Exception e) {
+		StackTraceElement[] stackTrace = e.getStackTrace();
+		System.out.println(e.getMessage());
+		StringBuffer error_message = new StringBuffer(e.toString()+enter_next_line);
+		for (StackTraceElement stackTraceElement : stackTrace) {
+			error_message.append(stackTraceElement.toString()+enter_next_line);
 		}
-		sysout(message);
+		log.error(error_message);
 	}
 }
