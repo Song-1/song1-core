@@ -6,15 +6,19 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Random;
+
 import javax.imageio.ImageIO;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 public class RandImage extends HttpServlet {
+	
+	
 	private static final long serialVersionUID = 1L;
+	public static final int width = 120;
+	public static final int height = 50;
 
 	Color getRandColor(int fc, int bc) {
 		Random random = new Random();
@@ -29,8 +33,31 @@ public class RandImage extends HttpServlet {
 	}
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		int width = 120;
-		int height = 50;
+		int width = 0;
+		int height = 0;
+		String width_str = request.getParameter("width");
+		String height_str = request.getParameter("height");
+		String format = request.getParameter("format");
+		if (width_str != null) {
+			try {
+				width = Integer.parseInt(width_str);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		if (width == 0) {
+			width = this.width;
+		}
+		if (height_str != null) {
+			try {
+				height = Integer.parseInt(height_str);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		if (height == 0) {
+			height = this.height;
+		}
 		BufferedImage image = new BufferedImage(width, height, 1);
 
 		Graphics g = image.getGraphics();
@@ -71,9 +98,12 @@ public class RandImage extends HttpServlet {
 		response.setHeader("Pragma", "No-cache");
 		response.setHeader("Cache-Control", "no-cache");
 		response.setDateHeader("Expires", 0L);
-		response.setContentType("image/jpeg");
+		if (format == null || format.trim().equals("")) {
+			format = ContentType.ImageEnum.JPG.toString().toLowerCase();
+		}
+		response.setContentType(ContentType.contentTypeMap.get(format));
 
-		ImageIO.write(image, "JPEG", response.getOutputStream());
+		ImageIO.write(image, format, response.getOutputStream());
 	}
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
